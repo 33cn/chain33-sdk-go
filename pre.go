@@ -4,10 +4,9 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/33cn/chain33-sdk-go/crypto"
 	"github.com/33cn/chain33-sdk-go/types"
-
+	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"golang.org/x/crypto/blake2b"
 	"math/big"
 )
@@ -67,15 +66,18 @@ func (p *EccPoit) ToPublicKey() *secp256k1.PublicKey {
 }
 
 func hashToModInt(digest []byte) *big.Int {
-	sum := new(big.Int).SetBytes(digest)
-	one := big.NewInt(1)
-	order_minus_1 := big.NewInt(0)
-	order_minus_1.Sub(baseN, one)
+	orderBits := baseN.BitLen()
+	orderBytes := (orderBits + 7) / 8
+	if len(digest) > orderBytes {
+		digest = digest[:orderBytes]
+	}
 
-	bigNum := big.NewInt(0)
-	bigNum.Mod(sum, order_minus_1).Add(bigNum, one)
-
-	return bigNum
+	ret := new(big.Int).SetBytes(digest)
+	excess := len(digest)*8 - orderBits
+	if excess > 0 {
+		ret.Rsh(ret, uint(excess))
+	}
+	return ret
 }
 
 func makeShamirPolyCoeff(threshold int) []*big.Int {
@@ -153,8 +155,8 @@ func GeneratePreEncryptKey(pubOwner []byte) ([]byte, string, string) {
 	pub_r := types.ToHex((*secp256k1.PublicKey)(&priv_r.PublicKey).SerializeCompressed())
 	pub_u := types.ToHex((*secp256k1.PublicKey)(&priv_u.PublicKey).SerializeCompressed())
 
-
-	return result.SerializeCompressed()[1:], pub_r, pub_u
+	share_key := crypto.KDF(result.SerializeCompressed(), 32)
+	return share_key, pub_r, pub_u
 }
 
 func GenerateKeyFragments(privOwner []byte, pubRecipient []byte, numSplit, threshold int) ([]*KFrag, error) {
@@ -226,7 +228,7 @@ func AssembleReencryptFragment(privRecipient []byte, reKeyFrags []*ReKeyFrag) ([
 	dhBob := dBobHash.Sum(nil)
 	dhBobBN := hashToModInt(dhBob)
 
-	var share_key *EccPoit
+	var result *EccPoit
 	if len(reKeyFrags) == 1 {
 		rPoint, err := NewEccPoint(reKeyFrags[0].ReKeyR)
 		if err != nil {
@@ -239,7 +241,7 @@ func AssembleReencryptFragment(privRecipient []byte, reKeyFrags []*ReKeyFrag) ([
 			return nil, err
 		}
 
-		share_key = rPoint.Add(uPoint).MulInt(dhBobBN)
+		result = rPoint.Add(uPoint).MulInt(dhBobBN)
 	} else {
 		var eFinal, vFinal *EccPoit
 
@@ -281,8 +283,9 @@ func AssembleReencryptFragment(privRecipient []byte, reKeyFrags []*ReKeyFrag) ([
 			eFinal = e.Add(eFinal)
 			vFinal = v.Add(vFinal)
 		}
-		share_key = eFinal.Add(vFinal).MulInt(dhBobBN)
+		result = eFinal.Add(vFinal).MulInt(dhBobBN)
 	}
 
-	return share_key.ToPublicKey().SerializeCompressed(), nil
+	share_key := crypto.KDF(result.ToPublicKey().SerializeCompressed(), 32)
+	return share_key, nil
 }
