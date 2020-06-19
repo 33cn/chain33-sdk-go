@@ -3,6 +3,7 @@ package sdk
 import (
 	"errors"
 	"github.com/33cn/chain33-sdk-go/crypto"
+	"github.com/33cn/chain33-sdk-go/crypto/ed25519"
 	"github.com/33cn/chain33-sdk-go/crypto/gm"
 	. "github.com/33cn/chain33-sdk-go/types"
 )
@@ -29,12 +30,19 @@ func Sign(tx *Transaction, privateKey []byte, signType string) (*Transaction, er
 		data := Encode(tx)
 		signature := gm.SM2Sign(data, privateKey, nil)
 		tx.Signature = &Signature{
-			Ty:        1,
+			Ty:        3,
 			Pubkey:    pub,
 			Signature: signature,
 		}
 	} else if signType == crypto.ED25519 {
-		// TODO
+		pub := ed25519.MakePublicKey(privateKey)
+		data := Encode(tx)
+		signature := ed25519.Sign(data, privateKey)
+		tx.Signature = &Signature{
+			Ty:                   2,
+			Pubkey:               pub,
+			Signature:            signature,
+		}
 	} else {
 		return nil, errors.New("sign type not support")
 	}
