@@ -3,6 +3,7 @@ package sdk
 import (
 	"errors"
 	"github.com/33cn/chain33-sdk-go/crypto"
+	"github.com/33cn/chain33-sdk-go/crypto/ed25519"
 	"github.com/33cn/chain33-sdk-go/crypto/gm"
 )
 
@@ -37,7 +38,18 @@ func NewAccount(signType string) (*Account, error) {
 		}
 		account.Address = addr
 	} else if signType == crypto.ED25519 {
-		// TODO
+		priv, pub, err := ed25519.GenerateKey()
+		if err != nil {
+			return nil, err
+		}
+		copy(account.PrivateKey, priv)
+		copy(account.PublicKey, pub)
+
+		addr, err := crypto.PubKeyToAddress(account.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		account.Address = addr
 	} else {
 		return nil, errors.New("sign type not support")
 	}

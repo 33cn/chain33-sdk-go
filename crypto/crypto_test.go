@@ -2,6 +2,7 @@ package  crypto
 
 import (
 	"fmt"
+	"github.com/33cn/chain33-sdk-go/crypto/ed25519"
 	"github.com/33cn/chain33-sdk-go/crypto/gm"
 	"github.com/33cn/chain33-sdk-go/types"
 	"github.com/stretchr/testify/assert"
@@ -47,7 +48,7 @@ func TestSM2(t *testing.T) {
 	fmt.Printf("sig = %x\n", sig)
 
 	result := gm.SM2Verify(msg, pub, sig, nil)
-	fmt.Println(result)
+	assert.Equal(t, true, result)
 }
 
 func TestSM4(t *testing.T) {
@@ -83,4 +84,20 @@ func TestKDF(t *testing.T) {
 	keyf := KDF(key, 32)
 	fmt.Println(keyf)
 	fmt.Println(len(keyf))
+}
+
+func TestED25519(t *testing.T) {
+	priv, pub, err := ed25519.GenerateKey()
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+	fmt.Println(types.ToHex(pub))
+
+	msg := []byte("sign test")
+
+	sig := ed25519.Sign(priv, msg)
+	fmt.Printf("sig = %x\n", sig)
+
+	result := ed25519.Verify(pub, msg, sig)
+	assert.Equal(t, true, result)
 }

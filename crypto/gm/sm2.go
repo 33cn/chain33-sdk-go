@@ -45,15 +45,15 @@ func parsePubKey(pubKeyStr []byte) (key *sm2.PublicKey) {
 	return sm2.Decompress(pubKeyStr)
 }
 
+//SerializePublicKey 公钥序列化
+func serializePublicKey(p *sm2.PublicKey) []byte {
+	return sm2.Compress(p)
+}
+
 //SerializePrivateKey 私钥序列化
 func serializePrivateKey(p *sm2.PrivateKey) []byte {
 	b := make([]byte, 0, SM2PrivateKeyLength)
 	return paddedAppend(SM2PrivateKeyLength, b, p.D.Bytes())
-}
-
-//SerializePublicKey 公钥序列化
-func serializePublicKey(p *sm2.PublicKey) []byte {
-	return sm2.Compress(p)
 }
 
 func paddedAppend(size uint, dst, src []byte) []byte {
