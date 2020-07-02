@@ -79,11 +79,9 @@ func TestAddress(t *testing.T) {
 }
 
 func TestKDF(t *testing.T) {
-	key := []byte{0x1, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10, 0x11}
-
-	keyf := KDF(key, 32)
-	fmt.Println(keyf)
-	fmt.Println(len(keyf))
+	keyf := KDF([]byte("kdf test"), 16)
+	fmt.Println(types.ToHex(keyf))
+	assert.Equal(t, 16, len(keyf))
 }
 
 func TestED25519(t *testing.T) {
