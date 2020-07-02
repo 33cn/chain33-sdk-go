@@ -2,16 +2,20 @@ package sdk
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"github.com/33cn/chain33-sdk-go/crypto"
 	"github.com/33cn/chain33-sdk-go/types"
 	secp256k1 "github.com/btcsuite/btcd/btcec"
-	"golang.org/x/crypto/blake2b"
 	"math/big"
 )
 
 var baseN = secp256k1.S256().Params().N
+
+const (
+	encKeyLength  = 16 // 对称秘钥长度，兼容jdk
+)
 
 type KFrag struct {
 	Random    string
@@ -34,7 +38,7 @@ type EccPoit struct {
 func NewEccPoint(pubStr string) (*EccPoit, error) {
 	reKeyRByte, err := types.FromHex(pubStr)
 	if err != nil {
-		fmt.Errorf("get reKeyRByte err", err)
+		fmt.Errorf("get reKeyRByte err, %s", err.Error())
 		return nil, err
 	}
 	reKeyR := crypto.PublicFromByte(reKeyRByte)
@@ -132,8 +136,8 @@ func calcLambdaCoeff(inId *big.Int, selectedIds []*big.Int) *big.Int {
 	return result
 }
 
-func getRandomInt(order *big.Int) *big.Int {
-	randInt, err := rand.Int(rand.Reader, order)
+func getRandomInt(bitlen int) *big.Int {
+	randInt, err := rand.Prime(rand.Reader, bitlen)
 	if err != nil {
 		panic(err)
 	}
@@ -155,7 +159,7 @@ func GeneratePreEncryptKey(pubOwner []byte) ([]byte, string, string) {
 	pub_r := types.ToHex((*secp256k1.PublicKey)(&priv_r.PublicKey).SerializeCompressed())
 	pub_u := types.ToHex((*secp256k1.PublicKey)(&priv_u.PublicKey).SerializeCompressed())
 
-	share_key := crypto.KDF(result.SerializeCompressed(), 32)
+	share_key := crypto.KDF(result.SerializeCompressed(), encKeyLength)
 	return share_key, pub_r, pub_u
 }
 
@@ -167,11 +171,8 @@ func GenerateKeyFragments(privOwner []byte, pubRecipient []byte, numSplit, thres
 	pubRecipientKey := crypto.PublicFromByte(pubRecipient)
 
 	dh_Alice_poit_x := types.ECDH(precursor, pubRecipientKey)
-	dAliceHash, err := blake2b.New256(precursor.X.Bytes())
-	if err != nil {
-		fmt.Errorf("Generate precursor Key err", err)
-		return nil, err
-	}
+	dAliceHash := sha256.New()
+	dAliceHash.Write(precursor.X.Bytes())
 	dAliceHash.Write(pubRecipientKey.X.Bytes())
 	dAliceHash.Write(dh_Alice_poit_x)
 	dAlice := dAliceHash.Sum(nil)
@@ -183,7 +184,7 @@ func GenerateKeyFragments(privOwner []byte, pubRecipient []byte, numSplit, thres
 
 	kFrags := make([]*KFrag, numSplit)
 	if numSplit == 1 {
-		id := getRandomInt(baseN)
+		id := getRandomInt(baseN.BitLen()-1)
 		kFrags[0] = &KFrag{Random: id.String(), Value: f0.String(), PrecurPub: precurPub}
 	} else {
 		coeffs := makeShamirPolyCoeff(threshold)
@@ -191,12 +192,9 @@ func GenerateKeyFragments(privOwner []byte, pubRecipient []byte, numSplit, thres
 
 		// rk[i] = f2*id^2 + f1*id + f0
 		for i, _ := range kFrags {
-			id := getRandomInt(baseN)
-			dShareHash, err := blake2b.New256(precursor.X.Bytes())
-			if err != nil {
-				fmt.Errorf("Generate precursor Key err", err)
-				return nil, err
-			}
+			id := getRandomInt(baseN.BitLen()-1)
+			dShareHash := sha256.New()
+			dShareHash.Write(precursor.X.Bytes())
 			dShareHash.Write(pubRecipientKey.X.Bytes())
 			dShareHash.Write(dh_Alice_poit_x)
 			dShareHash.Write(id.Bytes())
@@ -213,16 +211,13 @@ func AssembleReencryptFragment(privRecipient []byte, reKeyFrags []*ReKeyFrag) ([
 	privRecipientKey := crypto.PrivateFromByte(privRecipient)
 	precursor, err := types.FromHex(reKeyFrags[0].PrecurPub)
 	if err != nil {
-		fmt.Errorf("FromHex", err)
+		fmt.Errorf("FromHex, %s", err.Error())
 		return nil, err
 	}
 	precursorPubKey := crypto.PublicFromByte(precursor)
 	dh_Bob_poit_x := types.ECDH(privRecipientKey, precursorPubKey)
-	dBobHash, err := blake2b.New256(precursorPubKey.X.Bytes())
-	if err != nil {
-		fmt.Errorf("Generate precursor Key err", err)
-		return nil, err
-	}
+	dBobHash := sha256.New()
+	dBobHash.Write(precursorPubKey.X.Bytes())
 	dBobHash.Write(privRecipientKey.X.Bytes())
 	dBobHash.Write(dh_Bob_poit_x)
 	dhBob := dBobHash.Sum(nil)
@@ -232,12 +227,12 @@ func AssembleReencryptFragment(privRecipient []byte, reKeyFrags []*ReKeyFrag) ([
 	if len(reKeyFrags) == 1 {
 		rPoint, err := NewEccPoint(reKeyFrags[0].ReKeyR)
 		if err != nil {
-			fmt.Errorf("get reKeyRByte err", err)
+			fmt.Errorf("get reKeyRByte err, %s", err.Error())
 			return nil, err
 		}
 		uPoint, err := NewEccPoint(reKeyFrags[0].ReKeyU)
 		if err != nil {
-			fmt.Errorf("get reKeyRByte err", err)
+			fmt.Errorf("get reKeyRByte err, %s", err.Error())
 			return nil, err
 		}
 
@@ -247,11 +242,8 @@ func AssembleReencryptFragment(privRecipient []byte, reKeyFrags []*ReKeyFrag) ([
 
 		ids := make([]*big.Int, len(reKeyFrags))
 		for x, _ := range ids {
-			xs, err := blake2b.New256(precursorPubKey.X.Bytes())
-			if err != nil {
-				fmt.Errorf("Generate precursor Key err", err)
-				return nil, err
-			}
+			xs := sha256.New()
+			xs.Write(precursorPubKey.X.Bytes())
 			xs.Write(privRecipientKey.X.Bytes())
 			xs.Write(dh_Bob_poit_x)
 			random, ret := new(big.Int).SetString(reKeyFrags[x].Random, 10)
@@ -270,12 +262,12 @@ func AssembleReencryptFragment(privRecipient []byte, reKeyFrags []*ReKeyFrag) ([
 			}
 			rPoint, err := NewEccPoint(reKeyFrags[i].ReKeyR)
 			if err != nil {
-				fmt.Errorf("get reKeyRByte err", err)
+				fmt.Errorf("get reKeyRByte err, %s", err.Error())
 				return nil, err
 			}
 			uPoint, err := NewEccPoint(reKeyFrags[i].ReKeyU)
 			if err != nil {
-				fmt.Errorf("get reKeyRByte err", err)
+				fmt.Errorf("get reKeyRByte err, %s", err.Error())
 				return nil, err
 			}
 			e := rPoint.MulInt(lambda)
@@ -286,6 +278,6 @@ func AssembleReencryptFragment(privRecipient []byte, reKeyFrags []*ReKeyFrag) ([
 		result = eFinal.Add(vFinal).MulInt(dhBobBN)
 	}
 
-	share_key := crypto.KDF(result.ToPublicKey().SerializeCompressed(), 32)
+	share_key := crypto.KDF(result.ToPublicKey().SerializeCompressed(), encKeyLength)
 	return share_key, nil
 }

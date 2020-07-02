@@ -2,8 +2,8 @@ package crypto
 
 import (
 	"crypto/sha256"
+	"encoding/binary"
 	"golang.org/x/crypto/ripemd160"
-	"math/big"
 )
 
 
@@ -41,15 +41,22 @@ func Rimp160(b []byte) []byte {
 	return out[:]
 }
 
+func intToBytes(x int) []byte {
+	var buf = make([]byte, 4)
+
+	binary.BigEndian.PutUint32(buf, uint32(x))
+	return buf
+}
+
 func KDF(x []byte, length int) []byte {
 	var c []byte
 
-	var ct int64 = 1
+	var ct = 1
 	h := sha256.New()
 	for i, j := 0, (length+31)/32; i < j; i++ {
 		h.Reset()
 		h.Write(x)
-		h.Write(big.NewInt(ct).Bytes())
+		h.Write(intToBytes(ct))
 		hash := h.Sum(nil)
 		if i+1 == j && length%32 != 0 {
 			c = append(c, hash[:length%32]...)
