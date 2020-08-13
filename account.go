@@ -31,7 +31,7 @@ func NewAccount(signType string) (*Account, error) {
 		}
 		account.Address = addr
 	} else if signType == crypto.SM2 {
-		account.PrivateKey, account.PublicKey = gm.GenetateKey()
+		account.PrivateKey, account.PublicKey = gm.GenerateKey()
 		addr, err := crypto.PubKeyToAddress(account.PublicKey)
 		if err != nil {
 			return nil, err

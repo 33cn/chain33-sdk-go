@@ -26,7 +26,7 @@ require (
 	github.com/spf13/cobra v1.0.0 // indirect
 	github.com/stretchr/testify v1.5.1
 	github.com/syndtr/goleveldb v1.0.0 // indirect
-	github.com/tjfoc/gmsm v1.3.1
+	github.com/tjfoc/gmsm v1.3.2
 	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
 	google.golang.org/grpc v1.29.1 // indirect
 )
