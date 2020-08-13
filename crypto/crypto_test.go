@@ -39,15 +39,19 @@ func TestSign(t *testing.T) {
 }
 
 func TestSM2(t *testing.T) {
-	priv, pub := gm.GenetateKey()
+	priv, pub := gm.GenerateKey()
+	fmt.Println(priv)
+	fmt.Println(pub)
+
+	fmt.Println(types.ToHex(priv))
 	fmt.Println(types.ToHex(pub))
 
 	msg := []byte("sign test")
 
-	sig := gm.SM2Sign(msg, priv, nil)
+	sig := gm.SM2Sign(priv, msg,nil)
 	fmt.Printf("sig = %x\n", sig)
 
-	result := gm.SM2Verify(msg, pub, sig, nil)
+	result := gm.SM2Verify(pub, msg, nil, sig)
 	assert.Equal(t, true, result)
 }
 

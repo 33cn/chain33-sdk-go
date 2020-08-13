@@ -14,8 +14,7 @@ const (
 	SM2PrivateKeyLength = 32
 )
 
-var	DefaultUID = []byte{0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38,
-	                    0x13, 0x23, 0x33, 0x43, 0x53, 0x63, 0x73, 0x83}
+var	DefaultUID = []byte{0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38}
 
 func getRandBytes(numBytes int) []byte {
 	b := make([]byte, numBytes)
@@ -26,7 +25,7 @@ func getRandBytes(numBytes int) []byte {
 	return b
 }
 
-func privKeyFromBytes(curve elliptic.Curve, pk []byte) (*sm2.PrivateKey, *sm2.PublicKey) {
+func PrivKeyFromBytes(curve elliptic.Curve, pk []byte) (*sm2.PrivateKey, *sm2.PublicKey) {
 	x, y := curve.ScalarBaseMult(pk)
 
 	priv := &sm2.PrivateKey{
@@ -46,12 +45,12 @@ func parsePubKey(pubKeyStr []byte) (key *sm2.PublicKey) {
 }
 
 //SerializePublicKey 公钥序列化
-func serializePublicKey(p *sm2.PublicKey) []byte {
+func SerializePublicKey(p *sm2.PublicKey) []byte {
 	return sm2.Compress(p)
 }
 
 //SerializePrivateKey 私钥序列化
-func serializePrivateKey(p *sm2.PrivateKey) []byte {
+func SerializePrivateKey(p *sm2.PrivateKey) []byte {
 	b := make([]byte, 0, SM2PrivateKeyLength)
 	return paddedAppend(SM2PrivateKeyLength, b, p.D.Bytes())
 }
@@ -76,7 +75,7 @@ func canonicalizeInt(val *big.Int) []byte {
 	return b
 }
 
-func serializeSignature(r, s *big.Int) []byte {
+func SerializeSignature(r, s *big.Int) []byte {
 	rb := canonicalizeInt(r)
 	sb := canonicalizeInt(s)
 
@@ -95,7 +94,7 @@ func serializeSignature(r, s *big.Int) []byte {
 	return b
 }
 
-func deserializeSignature(sigStr []byte) (*big.Int, *big.Int, error) {
+func DeserializeSignature(sigStr []byte) (*big.Int, *big.Int, error) {
 	sig, err := btcec.ParseDERSignature(sigStr, sm2.P256Sm2())
 	if err != nil {
 		return nil, nil, err
@@ -104,7 +103,7 @@ func deserializeSignature(sigStr []byte) (*big.Int, *big.Int, error) {
 	return sig.R, sig.S, nil
 }
 
-func GenetateKey() ([]byte, []byte) {
+func GenerateKey() ([]byte, []byte) {
 	privKeyBytes := [SM2PrivateKeyLength]byte{}
 
 	for {
@@ -115,32 +114,32 @@ func GenetateKey() ([]byte, []byte) {
 		copy(privKeyBytes[:], key)
 		break
 	}
-	priv, pub := privKeyFromBytes(sm2.P256Sm2(), privKeyBytes[:])
+	priv, pub := PrivKeyFromBytes(sm2.P256Sm2(), privKeyBytes[:])
 
-	return serializePrivateKey(priv), serializePublicKey(pub)
+	return SerializePrivateKey(priv), SerializePublicKey(pub)
 }
 
-func SM2Sign(msg []byte, privateKey []byte, uid []byte) []byte {
+func SM2Sign(privateKey []byte, msg []byte, uid []byte) []byte {
 	if uid == nil {
 		uid = DefaultUID
 	}
 
-	priv, _ := privKeyFromBytes(sm2.P256Sm2(), privateKey)
+	priv, _ := PrivKeyFromBytes(sm2.P256Sm2(), privateKey)
 	r, s, err := sm2.Sm2Sign(priv, msg, uid)
 	if err != nil {
 		return nil
 	}
 
-	return serializeSignature(r, s)
+	return SerializeSignature(r, s)
 }
 
-func SM2Verify(msg []byte, publicKey []byte, sig []byte, uid []byte) bool {
+func SM2Verify(publicKey []byte, msg []byte, uid []byte, sig []byte,) bool {
 	if uid == nil {
 		uid = DefaultUID
 	}
 
 	pub := parsePubKey(publicKey[:])
-	r, s, err := deserializeSignature(sig)
+	r, s, err := DeserializeSignature(sig)
 	if err != nil {
 		fmt.Errorf("unmarshal sign failed")
 		return false
@@ -156,12 +155,12 @@ func SM2Encrypt(publicKey []byte, data []byte) ([]byte, error) {
 }
 
 func SM2Decrypt(privateKey []byte, data []byte) ([]byte, error) {
-	priv, _ := privKeyFromBytes(sm2.P256Sm2(), privateKey)
+	priv, _ := PrivKeyFromBytes(sm2.P256Sm2(), privateKey)
 
 	return sm2.Decrypt(priv, data)
 }
 
 func PubKeyFromPrivate(privKey []byte) []byte {
-	_, pub := privKeyFromBytes(sm2.P256Sm2(), privKey)
-	return serializePublicKey(pub)
+	_, pub := PrivKeyFromBytes(sm2.P256Sm2(), privKey)
+	return SerializePublicKey(pub)
 }
