@@ -28,7 +28,10 @@ func Sign(tx *Transaction, privateKey []byte, signType string) (*Transaction, er
 		pub := gm.PubKeyFromPrivate(privateKey)
 
 		data := Encode(tx)
-		signature := gm.SM2Sign(data, privateKey, nil)
+		signature, err := gm.SM2Sign(data, privateKey, nil)
+		if err != nil {
+			return nil, err
+		}
 		tx.Signature = &Signature{
 			Ty:        3,
 			Pubkey:    pub,

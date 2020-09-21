@@ -119,7 +119,7 @@ func GenerateKey() ([]byte, []byte) {
 	return SerializePrivateKey(priv), SerializePublicKey(pub)
 }
 
-func SM2Sign(privateKey []byte, msg []byte, uid []byte) []byte {
+func SM2Sign(privateKey []byte, msg []byte, uid []byte) ([]byte, error) {
 	if uid == nil {
 		uid = DefaultUID
 	}
@@ -127,13 +127,13 @@ func SM2Sign(privateKey []byte, msg []byte, uid []byte) []byte {
 	priv, _ := PrivKeyFromBytes(sm2.P256Sm2(), privateKey)
 	r, s, err := sm2.Sm2Sign(priv, msg, uid)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return SerializeSignature(r, s)
+	return SerializeSignature(r, s), nil
 }
 
-func SM2Verify(publicKey []byte, msg []byte, uid []byte, sig []byte,) bool {
+func SM2Verify(publicKey []byte, msg []byte, uid []byte, sig []byte) bool {
 	if uid == nil {
 		uid = DefaultUID
 	}
@@ -141,7 +141,7 @@ func SM2Verify(publicKey []byte, msg []byte, uid []byte, sig []byte,) bool {
 	pub := parsePubKey(publicKey[:])
 	r, s, err := DeserializeSignature(sig)
 	if err != nil {
-		fmt.Errorf("unmarshal sign failed")
+		fmt.Errorf("unmarshal sign failed:"+err.Error())
 		return false
 	}
 
