@@ -5,6 +5,7 @@ import (
 	"github.com/33cn/chain33-sdk-go/crypto"
 	. "github.com/33cn/chain33-sdk-go/types"
 	"math/rand"
+	"time"
 )
 
 /*
@@ -35,10 +36,10 @@ func CreateContentStorageTx(paraName string, op int32, key string, content []byt
 	}},
 	}
 	if paraName == "" {
-		tx := &Transaction{Execer: []byte(StorageX), Payload: Encode(payload), Fee: 1e5, Nonce: rand.Int63(), To: Addr}
+		tx := &Transaction{Execer: []byte(StorageX), Payload: Encode(payload), Fee: 1e5, Nonce: rand.Int63n(time.Now().UnixNano()), To: Addr}
 		return tx, nil
 	} else {
-		tx := &Transaction{Execer: []byte(paraName + StorageX), Payload: Encode(payload), Fee: 1e5, Nonce: rand.Int63(), To: crypto.GetExecAddress(paraName + StorageX)}
+		tx := &Transaction{Execer: []byte(paraName + StorageX), Payload: Encode(payload), Fee: 1e5, Nonce: rand.Int63n(time.Now().UnixNano()), To: crypto.GetExecAddress(paraName + StorageX)}
 		return tx, nil
 	}
 }
