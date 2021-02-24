@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package types;
+
+// cert合约action
+message CertAction {
+    oneof value {
+        CertNew new       = 1;
+        CertUpdate update = 2;
+        CertNormal normal = 3;
+    }
+    int32 ty = 4;
+}
+
+// 证书启用
+message CertNew {
+    string key   = 1;
+    bytes  value = 2;
+}
+
+// 证书更新
+message CertUpdate {
+    string key   = 1;
+    bytes  value = 2;
+}
+
+// 用户证书校验
+message CertNormal {
+    string key   = 1;
+    bytes  value = 2;
+}
+
+message CertSignature {
+    bytes signature = 1;
+    bytes cert      = 2;
+    bytes uid       = 3;
+}

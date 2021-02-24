@@ -12,7 +12,7 @@ import (
 
 var (
 	privkey = "cc38546e9e659d15e6b4893f0ab32a06d103931a8230b0bde71459d2b27d6944"
-	url     = "http://fd.33.cn:1276"
+	url     = "http://127.0.0.1:8801"
 )
 
 func TestCreateContentStorageTx(t *testing.T) {
@@ -20,7 +20,7 @@ func TestCreateContentStorageTx(t *testing.T) {
 	tx, err := CreateContentStorageTx("", OpCreate, "", []byte("hello"), "")
 	assert.Nil(t, err)
 	hexbytes, _ := types.FromHex(privkey)
-	sdk.Sign(tx, hexbytes, crypto.SECP256K1)
+	sdk.Sign(tx, hexbytes, crypto.SECP256K1, nil)
 	txhash := types.ToHexPrefix(sdk.Hash(tx))
 	jsonclient, err := client.NewJSONClient("", url)
 	assert.Nil(t, err)
@@ -57,7 +57,7 @@ func TestCreateHashStorageTx(t *testing.T) {
 	assert.Nil(t, err)
 	//签名
 	hexbytes, _ := types.FromHex(privkey)
-	sdk.Sign(tx, hexbytes, crypto.SECP256K1)
+	sdk.Sign(tx, hexbytes, crypto.SECP256K1, nil)
 	txhash := types.ToHexPrefix(sdk.Hash(tx))
 	jsonclient, err := client.NewJSONClient("", url)
 	assert.Nil(t, err)
@@ -80,7 +80,7 @@ func TestCreateLinkStorageTx(t *testing.T) {
 	tx, err := CreateLinkStorageTx("", "", []byte("hello"), "")
 	assert.Nil(t, err)
 	hexbytes, _ := types.FromHex(privkey)
-	sdk.Sign(tx, hexbytes, crypto.SECP256K1)
+	sdk.Sign(tx, hexbytes, crypto.SECP256K1, nil)
 	txhash := types.ToHexPrefix(sdk.Hash(tx))
 	jsonclient, err := client.NewJSONClient("", url)
 	assert.Nil(t, err)

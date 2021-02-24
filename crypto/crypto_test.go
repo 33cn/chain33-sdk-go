@@ -48,7 +48,7 @@ func TestSM2(t *testing.T) {
 
 	msg := []byte("sign test")
 
-	sig, _ := gm.SM2Sign(priv, msg,nil)
+	sig, _ := gm.SM2Sign(msg, priv,nil)
 	fmt.Printf("sig = %x\n", sig)
 
 	result := gm.SM2Verify(pub, msg, nil, sig)
