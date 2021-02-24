@@ -8,7 +8,7 @@ import (
 	. "github.com/33cn/chain33-sdk-go/types"
 )
 
-func Sign(tx *Transaction, privateKey []byte, signType string) (*Transaction, error) {
+func Sign(tx *Transaction, privateKey []byte, signType string, uid []byte) (*Transaction, error) {
 	if signType == "" {
 		signType = crypto.SECP256K1
 	}
@@ -28,12 +28,12 @@ func Sign(tx *Transaction, privateKey []byte, signType string) (*Transaction, er
 		pub := gm.PubKeyFromPrivate(privateKey)
 
 		data := Encode(tx)
-		signature, err := gm.SM2Sign(data, privateKey, nil)
+		signature, err := gm.SM2Sign(data, privateKey, uid)
 		if err != nil {
 			return nil, err
 		}
 		tx.Signature = &Signature{
-			Ty:        3,
+			Ty:        258,
 			Pubkey:    pub,
 			Signature: signature,
 		}

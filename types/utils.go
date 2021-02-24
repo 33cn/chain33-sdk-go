@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/golang/protobuf/proto"
+	"io/ioutil"
 )
 
 //exec type
@@ -66,4 +67,13 @@ func ECDH(priv *secp256k1.PrivateKey, pub *secp256k1.PublicKey) []byte {
 	ecKey := &secp256k1.PublicKey{}
 	ecKey.X, ecKey.Y = secp256k1.S256().ScalarMult(pub.X, pub.Y, priv.D.Bytes())
 	return ecKey.SerializeCompressed()
+}
+
+func ReadFile(file string) ([]byte, error) {
+	fileCont, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return fileCont, nil
 }

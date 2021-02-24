@@ -119,7 +119,7 @@ func GenerateKey() ([]byte, []byte) {
 	return SerializePrivateKey(priv), SerializePublicKey(pub)
 }
 
-func SM2Sign(privateKey []byte, msg []byte, uid []byte) ([]byte, error) {
+func SM2Sign(msg []byte, privateKey []byte, uid []byte) ([]byte, error) {
 	if uid == nil {
 		uid = DefaultUID
 	}
