@@ -3,6 +3,7 @@ package crypto
 import (
 	"bytes"
 	"crypto/rand"
+	"github.com/33cn/chain33-sdk-go/crypto/hash"
 	secp256k1 "github.com/btcsuite/btcd/btcec"
 )
 
@@ -37,7 +38,7 @@ func PubKeyFromPrivate(privKey []byte) []byte {
 
 func Sign(msg []byte, privKey []byte) []byte {
 	priv, _ := secp256k1.PrivKeyFromBytes(secp256k1.S256(), privKey[:])
-	sig, err := priv.Sign(Sha256(msg))
+	sig, err := priv.Sign(hash.Sha256(msg))
 	if err != nil {
 		panic("Error signing secp256k1" + err.Error())
 	}

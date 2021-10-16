@@ -5,6 +5,7 @@ import (
 	"github.com/33cn/chain33-sdk-go/crypto"
 	"github.com/33cn/chain33-sdk-go/crypto/ed25519"
 	"github.com/33cn/chain33-sdk-go/crypto/gm"
+	"github.com/33cn/chain33-sdk-go/crypto/hash"
 	. "github.com/33cn/chain33-sdk-go/types"
 )
 
@@ -73,5 +74,5 @@ func Hash(tx *Transaction) []byte {
 	copytx.Signature = nil
 	copytx.Header = nil
 	data := Encode(copytx)
-	return crypto.Sha256(data)
+	return hash.Sha256(data)
 }

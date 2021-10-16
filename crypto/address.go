@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/33cn/chain33-sdk-go/crypto/hash"
 	"github.com/mr-tron/base58/base58"
 )
 
@@ -27,7 +28,7 @@ func PubKeyToAddress(pub []byte) (addr string, err error) {
 	}
 
 	//添加版本号
-	hash160res := append(coinPrefix["BTY"], Rimp160(pub)...)
+	hash160res := append(coinPrefix["BTY"], hash.Rimp160(pub)...)
 
 	//添加校验码
 	cksum := checksum(hash160res)
@@ -63,13 +64,13 @@ func GetExecAddress(name string) string {
 	var bname [200]byte
 	buf := append(bname[:0], addrSeed...)
 	buf = append(buf, []byte(name)...)
-	pub := Sha2Sum(buf)
+	pub := hash.Sha2Sum(buf)
 
 	var ad [25]byte
 	ad[0] = 0
-	copy(ad[1:21], Rimp160(pub))
+	copy(ad[1:21], hash.Rimp160(pub))
 
-	sh := Sha2Sum(ad[0:21])
+	sh := hash.Sha2Sum(ad[0:21])
 	checksum := make([]byte, 4)
 	copy(checksum, sh[:4])
 
