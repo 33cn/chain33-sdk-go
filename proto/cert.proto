@@ -158,5 +158,5 @@ message AdminStore {
 
 // 证书校验请求
 message ReqValidateCert {
-    repeated string   serial = 1;
+    repeated string   serials = 1;
 }

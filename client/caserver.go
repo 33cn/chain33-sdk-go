@@ -120,6 +120,27 @@ func (client *JSONClient) CertGetCertInfo(serial string, adminKey []byte) (*type
 	return &res, nil
 }
 
+func (client *JSONClient) CertGetUserInfo(identity string, adminKey []byte) (*types.RepGetCertInfo, error) {
+	send := &types.ReqGetUserInfo{
+		Identity:                   identity,
+	}
+
+	msg := types.Encode(send)
+	sign, err := secp256r1.Sign(msg, adminKey)
+	if err != nil {
+		return nil, err
+	}
+	send.Sign = sign
+
+	var res types.RepGetCertInfo
+	err = client.Call("chain33-ca-server.GetUserInfo", send, &res)
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
+}
+
 
 func (client *JSONClient) CertAdminRegister(userName, userPub string, adminKey []byte) (bool, error) {
 	send := &types.ReqAdmin{
@@ -166,9 +187,9 @@ func (client *JSONClient) CertAdminRemove(userName, userPub string, adminKey []b
 	return res, nil
 }
 
-func (client *JSONClient) CertValidate(serial []string) ([]string, error) {
+func (client *JSONClient) CertValidate(serials []string) ([]string, error) {
 	send := &types.ReqValidateCert{
-		Serial: serial,
+		Serials: serials,
 	}
 	var detail []string
 	err := client.Call("chain33-ca-server.Validate", send, &detail)

@@ -156,7 +156,10 @@ func TestED25519(t *testing.T) {
 }
 
 func TestSecp256r1(t *testing.T) {
-	priv := secp256r1.GeneratePrivateKey()
+	priv,err := secp256r1.GeneratePrivateKey()
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
 	pub := secp256r1.PubKeyFromPrivate(priv)
 	fmt.Printf("priv = %x\n", priv)
 	fmt.Printf("pub = %x\n", pub)
