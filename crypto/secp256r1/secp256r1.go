@@ -5,7 +5,6 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
-	"github.com/33cn/chain33-sdk-go/crypto/hash"
 	"math/big"
 )
 
@@ -28,7 +27,7 @@ func PubKeyFromPrivate(privKey []byte) []byte {
 
 func Sign(msg []byte, privKey []byte) ([]byte, error) {
 	priv, pub := privKeyFromBytes(elliptic.P256(), privKey[:])
-	r, s, err := ecdsa.Sign(rand.Reader, priv, hash.Sha256(msg))
+	r, s, err := ecdsa.Sign(rand.Reader, priv, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +55,7 @@ func Verify(msg []byte, sigECDSA []byte, pubKey []byte) bool {
 	if !lowS {
 		return false
 	}
-	return ecdsa.Verify(pub, hash.Sha256(msg), r, s)
+	return ecdsa.Verify(pub, msg, r, s)
 }
 
 func PrivateFromByte(privKey []byte) *ecdsa.PrivateKey {
