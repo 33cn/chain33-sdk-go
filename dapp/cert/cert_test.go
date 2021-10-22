@@ -98,17 +98,26 @@ func TestCAServer(t *testing.T) {
 	assert.Equal(t, 1, len(res5))
 }
 
+// 证书管理方案测试
 func TestCAServerAdmin(t *testing.T) {
+    // CA中心管理员
 	caAdminPriv, _ := types.FromHex("e1d61ee8d20558b2c272589e9fe636c4c969e06f103c29dbf2b5a385f20a91e8")
 	//caAdminPub := "02fc5356da98ce1f97c7bda404f162b765c30c497445ac28857fdbfab04c6f589c"
 
+	// 测试用户
 	userName2 := "ycy2"
 	identity2 := "102"
 	pubKey2   := "037dcc61f5bf3bbe67846e9f3ed50250c6a2ac33069ca07338dbb653034e9e3a7f"
 
+	// 测试证书管理员
 	userName3 := "ycy3"
 	privKey3,_  := types.FromHex("36c597b95a438ce2782db6d7a8812bf3fe5c85677c49c150946f091c1dc641ea")
 	pubKey3   := "03e810079431c75c969ea8dded0e1e31db2ac5582a4484b9b22dd92f74ab9a9523"
+
+	// 测试非证书管理员
+	userName4  := "ycy4"
+	privKey4,_ := types.FromHex("0257bb2922803f537476b072ae8f8e6408bbcf5bfe4a501dc78a18c43bf2f880")
+	//pubKey4    := "0381bb16b0f1fc89f234f44b7e2675654bd2db14516a7ea36ee172bd55da3bc25f"
 
 	jsonclient, err := client.NewJSONClient("", caUrl)
 	assert.Nil(t, err)
@@ -120,8 +129,8 @@ func TestCAServerAdmin(t *testing.T) {
 	}
 	assert.Equal(t, true, res1)
 
-	// 非管理员申请证书
-	res2, err := jsonclient.CertEnroll(identity2, userName3, privKey3)
+	// 非管理员申请证书，返回失败
+	res2, err := jsonclient.CertEnroll(identity2, userName4, privKey4)
 	assert.NotNil(t, err)
 	assert.Nil(t, res2)
 
@@ -129,12 +138,24 @@ func TestCAServerAdmin(t *testing.T) {
 	res3, err := jsonclient.CertAdminRegister(userName3, pubKey3, caAdminPriv)
 	assert.Equal(t, true, res3)
 
-	// 新管理员申请证书
+	// 新管理员申请证书, 返回成功
 	res4, err := jsonclient.CertEnroll(identity2, userName3, privKey3)
 	assert.Nil(t, err)
 	assert.NotNil(t, res4)
+
+	// 非管理员注销证书，返回失败
+	res5, err := jsonclient.CertRevoke(res4.Serial, "", userName4, privKey4)
+	assert.NotNil(t, err)
+	assert.Equal(t, false, res5)
+
+	// 新管理员注销证书, 返回成功
+	res6, err := jsonclient.CertRevoke(res4.Serial, "", userName3, privKey3)
+	assert.Nil(t, err)
+	assert.Equal(t, true, res6)
+
 }
 
+// 批量生成多个用户证书
 func TestCAServerGenerate(t *testing.T) {
 	caAdminPriv, _ := types.FromHex("e1d61ee8d20558b2c272589e9fe636c4c969e06f103c29dbf2b5a385f20a91e8")
 	//caAdminPub := "02fc5356da98ce1f97c7bda404f162b765c30c497445ac28857fdbfab04c6f589c"
@@ -173,6 +194,7 @@ func TestCAServerGenerate(t *testing.T) {
 
 }
 
+// 生成新证书，修改userName和identity
 func TestCAServerGenerateNew(t *testing.T) {
 	caAdminPriv, _ := types.FromHex("e1d61ee8d20558b2c272589e9fe636c4c969e06f103c29dbf2b5a385f20a91e8")
 	//caAdminPub := "02fc5356da98ce1f97c7bda404f162b765c30c497445ac28857fdbfab04c6f589c"
@@ -209,6 +231,7 @@ func TestCAServerGenerateNew(t *testing.T) {
 
 }
 
+// 注销新证书，修改待注销的证书对应用户的identity
 func TestCAServerRevokeNew(t *testing.T) {
 	caAdminPriv, _ := types.FromHex("e1d61ee8d20558b2c272589e9fe636c4c969e06f103c29dbf2b5a385f20a91e8")
 	//caAdminPub := "02fc5356da98ce1f97c7bda404f162b765c30c497445ac28857fdbfab04c6f589c"
