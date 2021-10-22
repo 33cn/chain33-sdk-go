@@ -128,30 +128,36 @@ func TestCAServerAdmin(t *testing.T) {
 		assert.Fail(t, err.Error())
 	}
 	assert.Equal(t, true, res1)
+	fmt.Printf("注册用户：%t\n", res1)
 
 	// 非管理员申请证书，返回失败
 	res2, err := jsonclient.CertEnroll(identity2, userName4, privKey4)
 	assert.NotNil(t, err)
 	assert.Nil(t, res2)
+	fmt.Printf("普通用户申请证书：%s， 错误：%s\n", res2, err.Error())
 
 	// 添加管理员
 	res3, err := jsonclient.CertAdminRegister(userName3, pubKey3, caAdminPriv)
 	assert.Equal(t, true, res3)
+	fmt.Printf("添加管理员：%t\n", res3)
 
 	// 新管理员申请证书, 返回成功
 	res4, err := jsonclient.CertEnroll(identity2, userName3, privKey3)
 	assert.Nil(t, err)
 	assert.NotNil(t, res4)
+	fmt.Printf("管理员申请证书：%s\n", res4.Serial)
 
 	// 非管理员注销证书，返回失败
 	res5, err := jsonclient.CertRevoke(res4.Serial, "", userName4, privKey4)
 	assert.NotNil(t, err)
 	assert.Equal(t, false, res5)
+	fmt.Printf("普通用户注销证书：%t， 错误：%s\n", res5, err.Error())
 
 	// 新管理员注销证书, 返回成功
 	res6, err := jsonclient.CertRevoke(res4.Serial, "", userName3, privKey3)
 	assert.Nil(t, err)
 	assert.Equal(t, true, res6)
+	fmt.Printf("管理员注销证书：%t\n", res6)
 
 }
 
