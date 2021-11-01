@@ -52,6 +52,7 @@ func (client *JSONClient) CertUserRevoke(identity, admin string, adminKey []byte
 	return res, nil
 }
 
+// 申请证书
 func (client *JSONClient) CertEnroll(identity, admin string, adminKey []byte) (*types.RepEnroll, error) {
 	send := &types.ReqEnroll{
 		Identity:             identity,
@@ -74,7 +75,7 @@ func (client *JSONClient) CertEnroll(identity, admin string, adminKey []byte) (*
 	return &res, nil
 }
 
-
+// 注销证书
 func (client *JSONClient) CertRevoke(serial, identity, admin string, adminKey []byte) (bool, error) {
 	send := &types.ReqRevokeCert{
 		Serial:               serial,
@@ -98,14 +99,14 @@ func (client *JSONClient) CertRevoke(serial, identity, admin string, adminKey []
 	return res, nil
 }
 
-
-func (client *JSONClient) CertGetCertInfo(serial string, adminKey []byte) (*types.RepGetCertInfo, error) {
+// 查询证书信息
+func (client *JSONClient) CertGetCertInfo(serial string, userKey []byte) (*types.RepGetCertInfo, error) {
 	send := &types.ReqGetCertInfo{
 		Sn:                   serial,
 	}
 
 	msg := types.Encode(send)
-	sign, err := secp256r1.Sign(msg, adminKey)
+	sign, err := secp256r1.Sign(msg, userKey)
 	if err != nil {
 		return nil, err
 	}
@@ -120,19 +121,20 @@ func (client *JSONClient) CertGetCertInfo(serial string, adminKey []byte) (*type
 	return &res, nil
 }
 
-func (client *JSONClient) CertGetUserInfo(identity string, adminKey []byte) (*types.RepGetCertInfo, error) {
+// 查询用户信息
+func (client *JSONClient) CertGetUserInfo(identity string,  userKey []byte) (*types.RepGetUserInfo, error) {
 	send := &types.ReqGetUserInfo{
 		Identity:                   identity,
 	}
 
 	msg := types.Encode(send)
-	sign, err := secp256r1.Sign(msg, adminKey)
+	sign, err := secp256r1.Sign(msg, userKey)
 	if err != nil {
 		return nil, err
 	}
 	send.Sign = sign
 
-	var res types.RepGetCertInfo
+	var res types.RepGetUserInfo
 	err = client.Call("chain33-ca-server.GetUserInfo", send, &res)
 	if err != nil {
 		return nil, err
@@ -141,7 +143,7 @@ func (client *JSONClient) CertGetUserInfo(identity string, adminKey []byte) (*ty
 	return &res, nil
 }
 
-
+// 添加证书管理员
 func (client *JSONClient) CertAdminRegister(userName, userPub string, adminKey []byte) (bool, error) {
 	send := &types.ReqAdmin{
 		Name:                 userName,
@@ -164,7 +166,7 @@ func (client *JSONClient) CertAdminRegister(userName, userPub string, adminKey [
 	return res, nil
 }
 
-
+// 删除证书管理员
 func (client *JSONClient) CertAdminRemove(userName, userPub string, adminKey []byte) (bool, error) {
 	send := &types.ReqAdmin{
 		Name:                 userName,
@@ -187,6 +189,7 @@ func (client *JSONClient) CertAdminRemove(userName, userPub string, adminKey []b
 	return res, nil
 }
 
+// 证书校验
 func (client *JSONClient) CertValidate(serials []string) ([]string, error) {
 	send := &types.ReqValidateCert{
 		Serials: serials,
