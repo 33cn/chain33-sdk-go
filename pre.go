@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/33cn/chain33-sdk-go/crypto"
+	"github.com/33cn/chain33-sdk-go/crypto/hash"
 	"github.com/33cn/chain33-sdk-go/types"
 	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"math/big"
@@ -159,7 +160,7 @@ func GeneratePreEncryptKey(pubOwner []byte) ([]byte, string, string) {
 	pub_r := types.ToHex((*secp256k1.PublicKey)(&priv_r.PublicKey).SerializeCompressed())
 	pub_u := types.ToHex((*secp256k1.PublicKey)(&priv_u.PublicKey).SerializeCompressed())
 
-	share_key := crypto.KDF(result.SerializeCompressed(), encKeyLength)
+	share_key := hash.KDF(result.SerializeCompressed(), encKeyLength)
 	return share_key, pub_r, pub_u
 }
 
@@ -278,6 +279,6 @@ func AssembleReencryptFragment(privRecipient []byte, reKeyFrags []*ReKeyFrag) ([
 		result = eFinal.Add(vFinal).MulInt(dhBobBN)
 	}
 
-	share_key := crypto.KDF(result.ToPublicKey().SerializeCompressed(), encKeyLength)
+	share_key := hash.KDF(result.ToPublicKey().SerializeCompressed(), encKeyLength)
 	return share_key, nil
 }

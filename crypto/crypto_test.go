@@ -4,28 +4,53 @@ import (
 	"fmt"
 	"github.com/33cn/chain33-sdk-go/crypto/ed25519"
 	"github.com/33cn/chain33-sdk-go/crypto/gm"
+	"github.com/33cn/chain33-sdk-go/crypto/hash"
+	"github.com/33cn/chain33-sdk-go/crypto/secp256r1"
 	"github.com/33cn/chain33-sdk-go/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestAES(t *testing.T) {
-	var text = "hello aes"
+	buf := getRandBytes(1e7)
 	var key = getRandBytes(16)
 
-	cipherText, err := AESCBCPKCS7Encrypt(key, []byte(text))
+	start := time.Now().UnixNano()
+	cipherText, err := AESCBCPKCS7Encrypt(key, buf)
 	if err != nil {
-		fmt.Println(err)
-		return
+		assert.Error(t, err)
 	}
 
 	cipher, err := AESCBCPKCS7Decrypt(key, cipherText)
 	if err != nil {
-		fmt.Println(err)
-		return
+		assert.Error(t, err)
 	}
+	fmt.Println(time.Now().UnixNano() - start)
 
-	assert.Equal(t, text, string(cipher))
+	assert.Equal(t, buf, cipher)
+}
+
+func BenchmarkAESEncrypt(b *testing.B) {
+	var cipherText, cipher []byte
+	var err error
+
+	buf := getRandBytes(1024*1024*1024)
+	var key = getRandBytes(16)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		cipherText, err = AESCBCPKCS7Encrypt(key, buf)
+		if err != nil {
+			assert.Error(b, err)
+		}
+
+		cipher, err = AESCBCPKCS7Decrypt(key, cipherText)
+		if err != nil {
+			assert.Error(b, err)
+		}
+	}
+	assert.Equal(b, buf, cipher)
 }
 
 func TestSign(t *testing.T) {
@@ -58,7 +83,7 @@ func TestSM2(t *testing.T) {
 func TestSM4(t *testing.T) {
 	key := []byte{0x1, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10}
 	fmt.Printf("key = %v\n", key)
-	data := []byte{0x1, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10}
+	data := getRandBytes(32)
 	fmt.Printf("data = %x\n", data)
 	d0 := gm.SM4Encrypt(key, data)
 	fmt.Printf("d0 = %x\n", d0)
@@ -66,6 +91,32 @@ func TestSM4(t *testing.T) {
 	fmt.Printf("d1 = %x\n", d1)
 
 	assert.Equal(t, data, d1)
+}
+
+func BenchmarkSM2Encrypt(b *testing.B) {
+	var cipherText, cipher []byte
+	var err error
+
+	priv, pub := gm.GenerateKey()
+
+	buf := getRandBytes(1024*1024*1024)
+	fmt.Println(len(buf))
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		cipherText, err = gm.SM2Encrypt(pub, buf)
+		if err != nil {
+			assert.Error(b, err)
+		}
+		//fmt.Println(len(cipherText))
+		//ioutil.WriteFile("cipherSm2.txt", cipherText, 666)
+
+		cipher,err = gm.SM2Decrypt(priv, cipherText)
+		if err != nil {
+			assert.Error(b, err)
+		}
+	}
+	assert.Equal(b, buf, cipher)
 }
 
 func TestAddress(t *testing.T) {
@@ -83,7 +134,7 @@ func TestAddress(t *testing.T) {
 }
 
 func TestKDF(t *testing.T) {
-	keyf := KDF([]byte("kdf test"), 16)
+	keyf := hash.KDF([]byte("kdf test"), 16)
 	fmt.Println(types.ToHex(keyf))
 	assert.Equal(t, 16, len(keyf))
 }
@@ -101,5 +152,26 @@ func TestED25519(t *testing.T) {
 	fmt.Printf("sig = %x\n", sig)
 
 	result := ed25519.Verify(pub, msg, sig)
+	assert.Equal(t, true, result)
+}
+
+func TestSecp256r1(t *testing.T) {
+	priv,err := secp256r1.GeneratePrivateKey()
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+	pub := secp256r1.PubKeyFromPrivate(priv)
+	fmt.Printf("priv = %x\n", priv)
+	fmt.Printf("pub = %x\n", pub)
+
+	msg := []byte("sign test")
+
+	sig, err := secp256r1.Sign(msg, priv)
+	if err != nil {
+		assert.Fail(t, err.Error())
+	}
+	fmt.Printf("sig = %x\n", sig)
+
+	result := secp256r1.Verify(msg, sig, pub)
 	assert.Equal(t, true, result)
 }

@@ -18,7 +18,7 @@ func SM4Encrypt(key []byte, data []byte) []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-	cipher := make([]byte, 16)
+	cipher := make([]byte, len(data))
 	c.Encrypt(cipher, data)
 
 	return cipher
@@ -29,7 +29,7 @@ func SM4Decrypt(key []byte, data []byte) []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-	cipher := make([]byte, 16)
+	cipher := make([]byte, len(data))
 	c.Decrypt(cipher, data)
 
 	return cipher
