@@ -20,6 +20,7 @@ var (
 	certFilePath = "./test/signcerts/user1@org1-cert.pem"
 
 	caUrl = "http://127.0.0.1:11901"
+	caPrivKey=""
 )
 
 func TestCreateCertNormalTx(t *testing.T) {
@@ -50,12 +51,11 @@ func TestCreateCertNormalTx(t *testing.T) {
 }
 
 func TestCAServer(t *testing.T) {
-	caAdminPriv, _ := types.FromHex("e1d61ee8d20558b2c272589e9fe636c4c969e06f103c29dbf2b5a385f20a91e8")
-	//caAdminPub := "02fc5356da98ce1f97c7bda404f162b765c30c497445ac28857fdbfab04c6f589c"
+	caAdminPriv, _ := types.FromHex(caPrivKey)
 
 	userName1 := "ycy"
 	identity1 := "101"
-	pubKey1   := "02d5c86531a6bfa14d31afe986b49ea0cf0be395925304b757cede832874a11a3d"
+	pubKey1   := "pubKey1"
 
 	jsonclient, err := client.NewJSONClient("", caUrl)
 	assert.Nil(t, err)
@@ -101,23 +101,21 @@ func TestCAServer(t *testing.T) {
 // 证书管理方案测试
 func TestCAServerAdmin(t *testing.T) {
     // CA中心管理员
-	caAdminPriv, _ := types.FromHex("e1d61ee8d20558b2c272589e9fe636c4c969e06f103c29dbf2b5a385f20a91e8")
-	//caAdminPub := "02fc5356da98ce1f97c7bda404f162b765c30c497445ac28857fdbfab04c6f589c"
+	caAdminPriv, _ := types.FromHex(caPrivKey)
 
 	// 测试用户
 	userName2 := "ycy2"
 	identity2 := "102"
-	pubKey2   := "037dcc61f5bf3bbe67846e9f3ed50250c6a2ac33069ca07338dbb653034e9e3a7f"
+	pubKey2   := "pubKey2"
 
 	// 测试证书管理员
 	userName3 := "ycy3"
-	privKey3,_  := types.FromHex("36c597b95a438ce2782db6d7a8812bf3fe5c85677c49c150946f091c1dc641ea")
-	pubKey3   := "03e810079431c75c969ea8dded0e1e31db2ac5582a4484b9b22dd92f74ab9a9523"
+	privKey3,_  := types.FromHex("privKey3")
+	pubKey3   := "pubKey3"
 
 	// 测试非证书管理员
 	userName4  := "ycy4"
-	privKey4,_ := types.FromHex("0257bb2922803f537476b072ae8f8e6408bbcf5bfe4a501dc78a18c43bf2f880")
-	//pubKey4    := "0381bb16b0f1fc89f234f44b7e2675654bd2db14516a7ea36ee172bd55da3bc25f"
+	privKey4,_ := types.FromHex("privKey4")
 
 	jsonclient, err := client.NewJSONClient("", caUrl)
 	assert.Nil(t, err)
@@ -163,8 +161,7 @@ func TestCAServerAdmin(t *testing.T) {
 
 // 批量生成多个用户证书
 func TestCAServerGenerate(t *testing.T) {
-	caAdminPriv, _ := types.FromHex("e1d61ee8d20558b2c272589e9fe636c4c969e06f103c29dbf2b5a385f20a91e8")
-	//caAdminPub := "02fc5356da98ce1f97c7bda404f162b765c30c497445ac28857fdbfab04c6f589c"
+	caAdminPriv, _ := types.FromHex(caPrivKey)
 
 	jsonclient, err := client.NewJSONClient("", caUrl)
 	assert.Nil(t, err)
@@ -202,8 +199,7 @@ func TestCAServerGenerate(t *testing.T) {
 
 // 生成新证书，修改userName和identity
 func TestCAServerGenerateNew(t *testing.T) {
-	caAdminPriv, _ := types.FromHex("e1d61ee8d20558b2c272589e9fe636c4c969e06f103c29dbf2b5a385f20a91e8")
-	//caAdminPub := "02fc5356da98ce1f97c7bda404f162b765c30c497445ac28857fdbfab04c6f589c"
+	caAdminPriv, _ := types.FromHex(caPrivKey)
 
 	jsonclient, err := client.NewJSONClient("", caUrl)
 	assert.Nil(t, err)
@@ -239,8 +235,7 @@ func TestCAServerGenerateNew(t *testing.T) {
 
 // 注销新证书，修改待注销的证书对应用户的identity
 func TestCAServerRevokeNew(t *testing.T) {
-	caAdminPriv, _ := types.FromHex("e1d61ee8d20558b2c272589e9fe636c4c969e06f103c29dbf2b5a385f20a91e8")
-	//caAdminPub := "02fc5356da98ce1f97c7bda404f162b765c30c497445ac28857fdbfab04c6f589c"
+	caAdminPriv, _ := types.FromHex(caPrivKey)
 
 	jsonclient, err := client.NewJSONClient("", caUrl)
 	assert.Nil(t, err)
