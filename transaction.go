@@ -7,9 +7,10 @@ import (
 	"github.com/33cn/chain33-sdk-go/crypto/gm"
 	"github.com/33cn/chain33-sdk-go/crypto/hash"
 	. "github.com/33cn/chain33-sdk-go/types"
+	ttypes "github.com/33cn/chain33/types"
 )
 
-func Sign(tx *Transaction, privateKey []byte, signType string, uid []byte) (*Transaction, error) {
+func Sign(tx *ttypes.Transaction, privateKey []byte, signType string, uid []byte) (*ttypes.Transaction, error) {
 	if signType == "" {
 		signType = crypto.SECP256K1
 	}
@@ -20,7 +21,7 @@ func Sign(tx *Transaction, privateKey []byte, signType string, uid []byte) (*Tra
 
 		data := Encode(tx)
 		signature := crypto.Sign(data, privateKey)
-		tx.Signature = &Signature{
+		tx.Signature = &ttypes.Signature{
 			Ty:        1,
 			Pubkey:    pub,
 			Signature: signature,
@@ -33,7 +34,7 @@ func Sign(tx *Transaction, privateKey []byte, signType string, uid []byte) (*Tra
 		if err != nil {
 			return nil, err
 		}
-		tx.Signature = &Signature{
+		tx.Signature = &ttypes.Signature{
 			Ty:        258,
 			Pubkey:    pub,
 			Signature: signature,
@@ -42,10 +43,10 @@ func Sign(tx *Transaction, privateKey []byte, signType string, uid []byte) (*Tra
 		pub := ed25519.MakePublicKey(privateKey)
 		data := Encode(tx)
 		signature := ed25519.Sign(data, privateKey)
-		tx.Signature = &Signature{
-			Ty:                   2,
-			Pubkey:               pub,
-			Signature:            signature,
+		tx.Signature = &ttypes.Signature{
+			Ty:        2,
+			Pubkey:    pub,
+			Signature: signature,
 		}
 	} else {
 		return nil, errors.New("sign type not support")
@@ -54,8 +55,8 @@ func Sign(tx *Transaction, privateKey []byte, signType string, uid []byte) (*Tra
 	return tx, nil
 }
 
-func cloneTx(tx *Transaction) *Transaction {
-	copytx := &Transaction{}
+func cloneTx(tx *ttypes.Transaction) *ttypes.Transaction {
+	copytx := &ttypes.Transaction{}
 	copytx.Execer = tx.Execer
 	copytx.Payload = tx.Payload
 	copytx.Signature = tx.Signature
@@ -69,7 +70,7 @@ func cloneTx(tx *Transaction) *Transaction {
 	return copytx
 }
 
-func Hash(tx *Transaction) []byte {
+func Hash(tx *ttypes.Transaction) []byte {
 	copytx := cloneTx(tx)
 	copytx.Signature = nil
 	copytx.Header = nil
