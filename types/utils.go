@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/hex"
+	chainTypes "github.com/33cn/chain33/types"
 	secp256k1 "github.com/btcsuite/btcd/btcec"
 	"github.com/golang/protobuf/proto"
 	"io/ioutil"
@@ -50,16 +51,12 @@ func ToHexPrefix(b []byte) string {
 
 //Encode  编码
 func Encode(data proto.Message) []byte {
-	b, err := proto.Marshal(data)
-	if err != nil {
-		panic(err)
-	}
-	return b
+	return chainTypes.Encode(data)
 }
 
 //Decode  解码
 func Decode(data []byte, msg proto.Message) error {
-	return proto.Unmarshal(data, msg)
+	return chainTypes.Decode(data, msg)
 }
 
 // ECDH Calculate a shared secret using elliptic curve Diffie-Hellman

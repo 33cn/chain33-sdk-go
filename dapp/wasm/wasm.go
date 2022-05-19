@@ -8,6 +8,7 @@ import (
 	sdk "github.com/33cn/chain33-sdk-go"
 	"github.com/33cn/chain33-sdk-go/crypto"
 	"github.com/33cn/chain33-sdk-go/types"
+	ttypes "github.com/33cn/chain33/types"
 )
 
 var r *rand.Rand
@@ -16,7 +17,7 @@ func init() {
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-func CreateWasmCreateTx(paraName, path, name string, privKey, cert, uid []byte) (*types.Transaction, error) {
+func CreateWasmCreateTx(paraName, path, name string, privKey, cert, uid []byte) (*ttypes.Transaction, error) {
 	code, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -30,7 +31,7 @@ func CreateWasmCreateTx(paraName, path, name string, privKey, cert, uid []byte) 
 			},
 		},
 	}
-	tx := &types.Transaction{Execer: []byte(paraName + WasmX), Payload: types.Encode(payload), Fee: 1e5, Nonce: r.Int63(), To: crypto.GetExecAddress(paraName + WasmX)}
+	tx := &ttypes.Transaction{Execer: []byte(paraName + WasmX), Payload: types.Encode(payload), Fee: 1e5, Nonce: r.Int63(), To: crypto.GetExecAddress(paraName + WasmX)}
 	tx, err = sdk.Sign(tx, privKey, crypto.SM2, uid)
 	if err != nil {
 		return nil, err
@@ -39,7 +40,7 @@ func CreateWasmCreateTx(paraName, path, name string, privKey, cert, uid []byte) 
 	return tx, nil
 }
 
-func CreateWasmUpdateTx(paraName, path, name string, privKey, cert, uid []byte) (*types.Transaction, error) {
+func CreateWasmUpdateTx(paraName, path, name string, privKey, cert, uid []byte) (*ttypes.Transaction, error) {
 	code, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -53,7 +54,7 @@ func CreateWasmUpdateTx(paraName, path, name string, privKey, cert, uid []byte) 
 			},
 		},
 	}
-	tx := &types.Transaction{Execer: []byte(paraName + WasmX), Payload: types.Encode(payload), Fee: 1e5, Nonce: r.Int63(), To: crypto.GetExecAddress(paraName + WasmX)}
+	tx := &ttypes.Transaction{Execer: []byte(paraName + WasmX), Payload: types.Encode(payload), Fee: 1e5, Nonce: r.Int63(), To: crypto.GetExecAddress(paraName + WasmX)}
 	tx, err = sdk.Sign(tx, privKey, crypto.SM2, uid)
 	if err != nil {
 		return nil, err
@@ -62,7 +63,7 @@ func CreateWasmUpdateTx(paraName, path, name string, privKey, cert, uid []byte) 
 	return tx, nil
 }
 
-func CreateWasmCallTx(paraName, contract, method string, param []int64, env []string, privKey, cert, uid []byte) (*types.Transaction, error) {
+func CreateWasmCallTx(paraName, contract, method string, param []int64, env []string, privKey, cert, uid []byte) (*ttypes.Transaction, error) {
 	payload := &types.WasmAction{
 		Ty: WasmActionCall,
 		Value: &types.WasmAction_Call{
@@ -70,11 +71,11 @@ func CreateWasmCallTx(paraName, contract, method string, param []int64, env []st
 				Contract:   contract,
 				Method:     method,
 				Parameters: param,
-				Env: env,
+				Env:        env,
 			},
 		},
 	}
-	tx := &types.Transaction{Execer: []byte(paraName + WasmX), Payload: types.Encode(payload), Fee: 1e5, Nonce: r.Int63(), To: crypto.GetExecAddress(paraName + WasmX)}
+	tx := &ttypes.Transaction{Execer: []byte(paraName + WasmX), Payload: types.Encode(payload), Fee: 1e5, Nonce: r.Int63(), To: crypto.GetExecAddress(paraName + WasmX)}
 	var err error
 	tx, err = sdk.Sign(tx, privKey, crypto.SM2, uid)
 	if err != nil {

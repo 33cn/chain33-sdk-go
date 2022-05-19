@@ -39,5 +39,34 @@ result := crypto.gm.SM2Verify(pub, msg, nil, sig)
 ### 存证接口
 创建存证合约原始交易
 
+### EVM合约
+- 合约部署
+```go
+code, err := types.FromHex(codes)
+tx, err := CreateEvmContract(code, "", "evm-sdk-test", paraName)
+err = SignTx(tx, deployPrivateKey)
+signTx := types.ToHexPrefix(types.Encode(tx))
+client.SendTransaction(signedTx)
+
+contractAddress := crypto.GetExecAddress(deployAddress + strings.TrimPrefix(txhash, "0x")) 
+```
+
+- 合约调用
+```go
+param := fmt.Sprintf("mint(%s,%s,%s,%s)", useraAddress, idStr, amountStr, uriStr)
+initNFT, err := EncodeParameter(abi, param)
+tx, err = CallEvmContract(initNFT, "", 0, contractAddress, paraName)
+// 构造代扣交易组
+group, err := CreateNobalance(tx, useraPrivateKey, withholdPrivateKey, paraName)
+signTx = types.ToHexPrefix(types.Encode(group.Tx()))
+client.SendTransaction(signTx)
+```
+
+- 合约查询
+```go
+param = fmt.Sprintf("balanceOf(%s,%d)", useraAddress, ids[0])
+QueryContract(url, contractAddress, abi, param, contractAddress)
+```
+
 ## 接口文档
 [chain33-sdk-go API](./接口文档.md)
