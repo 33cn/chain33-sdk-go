@@ -26,26 +26,26 @@ func init() {
 	r = rand.New(rand.NewSource(time.Now().UnixNano()))
 }
 
-func CreateEvmContract(code []byte, note string, alias string, paraName string, addressID int32) (*ttypes.Transaction, error) {
+func CreateEvmContract(code []byte, note string, alias string, paraName string, addressID int32, chainID int32) (*ttypes.Transaction, error) {
 	payload := &evmtypes.EVMContractAction{
 		Code:  code,
 		Note:  note,
 		Alias: alias,
 	}
 	payload.ContractAddr, _ = address.GetExecAddress(paraName+EvmX, addressID)
-	tx := &ttypes.Transaction{Execer: []byte(paraName + EvmX), Payload: types.Encode(payload), Fee: 0, Nonce: r.Int63()}
+	tx := &ttypes.Transaction{Execer: []byte(paraName + EvmX), Payload: types.Encode(payload), Fee: 0, Nonce: r.Int63(), ChainID: chainID}
 	tx.To, _ = address.GetExecAddress(paraName+EvmX, addressID)
 	return tx, nil
 }
 
-func CallEvmContract(param []byte, note string, amount int64, contractAddr string, paraName string, addressID int32) (*ttypes.Transaction, error) {
+func CallEvmContract(param []byte, note string, amount int64, contractAddr string, paraName string, addressID int32, chainID int32) (*ttypes.Transaction, error) {
 	payload := &evmtypes.EVMContractAction{
 		Para:         param,
 		Note:         note,
 		Amount:       uint64(amount),
 		ContractAddr: contractAddr,
 	}
-	tx := &ttypes.Transaction{Execer: []byte(paraName + EvmX), Payload: types.Encode(payload), Fee: 0, Nonce: r.Int63()}
+	tx := &ttypes.Transaction{Execer: []byte(paraName + EvmX), Payload: types.Encode(payload), Fee: 0, Nonce: r.Int63(), ChainID: chainID}
 	tx.To, _ = address.GetExecAddress(paraName+EvmX, addressID)
 	return tx, nil
 }
@@ -165,10 +165,10 @@ func sendQuery(rpcAddr, funcName string, request ttypes.Message, result proto.Me
 	return nil
 }
 
-func CreateNobalance(etx *ttypes.Transaction, fromAddressPriveteKey, withHoldPrivateKey, paraName string, addressID int32) (*ttypes.Transactions, error) {
+func CreateNobalance(etx *ttypes.Transaction, fromAddressPriveteKey, withHoldPrivateKey, paraName string, addressID int32, chainID int32) (*ttypes.Transactions, error) {
 	var noneExecer = "none"
 
-	noneTx := &ttypes.Transaction{Execer: []byte(paraName + noneExecer), Payload: []byte("no-fee-transaction"), Nonce: rand.Int63()}
+	noneTx := &ttypes.Transaction{Execer: []byte(paraName + noneExecer), Payload: []byte("no-fee-transaction"), Nonce: rand.Int63(), ChainID: chainID}
 	noneTx.To, _ = address.GetExecAddress(paraName+noneExecer, addressID)
 	noneTx.Fee = EVM_FEE
 	txs := []*ttypes.Transaction{noneTx}
