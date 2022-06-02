@@ -43,21 +43,30 @@ result := crypto.gm.SM2Verify(pub, msg, nil, sig)
 - 合约部署
 ```go
 code, err := types.FromHex(codes)
-tx, err := CreateEvmContract(code, "", "evm-sdk-test", paraName)
-err = SignTx(tx, deployPrivateKey)
+// 构造部署合约的交易，addressID表示地址类型（2表示ETH地址），chainID表示链的ID，由节点配置文件中ChainID确定
+tx, err := CreateEvmContract(code, "", "evm-sdk-test", paraName, int32(addressID), int32(chainID))
+unsignTx := types.ToHex(types.Encode(tx))
+// 获取预估gas
+gas, err := QueryEvmGas(url, unsignTx, deployAddress)
+UpdateTxFee(tx, gas)
+err = SignTx(tx, deployPrivateKey, int32(addressID))
 signTx := types.ToHexPrefix(types.Encode(tx))
 client.SendTransaction(signedTx)
-
-contractAddress := crypto.GetExecAddress(deployAddress + strings.TrimPrefix(txhash, "0x")) 
+// 计算合约地址
+contractAddress := LocalGetContractAddr(deployAddress, tx.Hash(), int32(addressID)) 
 ```
 
 - 合约调用
 ```go
+// 构造调用合约的交易
 param := fmt.Sprintf("mint(%s,%s,%s,%s)", useraAddress, idStr, amountStr, uriStr)
 initNFT, err := EncodeParameter(abi, param)
-tx, err = CallEvmContract(initNFT, "", 0, contractAddress, paraName)
-// 构造代扣交易组
-group, err := CreateNobalance(tx, useraPrivateKey, withholdPrivateKey, paraName)
+tx, err = CallEvmContract(initNFT, "", 0, contractAddress, paraName, int32(addressID), int32(chainID))
+unsignTx := types.ToHex(types.Encode(tx))
+// 获取预估gas
+gas, err = QueryEvmGas(url, unsignTx, deployAddress)
+// 构造代扣交易组，withholdPrivateKey表示代扣账户私钥，useraPrivateKey表示原交易签名账户私钥
+group, err := CreateNobalance(tx, useraPrivateKey, withholdPrivateKey, paraName, int32(addressID), int32(chainID))
 signTx = types.ToHexPrefix(types.Encode(group.Tx()))
 client.SendTransaction(signTx)
 ```
@@ -65,7 +74,7 @@ client.SendTransaction(signTx)
 - 合约查询
 ```go
 param = fmt.Sprintf("balanceOf(%s,%d)", useraAddress, ids[0])
-QueryContract(url, contractAddress, abi, param, contractAddress)
+balance, err := QueryContract(url, contractAddress, abi, param, contractAddress)
 ```
 
 ## 接口文档
