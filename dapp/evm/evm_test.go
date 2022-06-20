@@ -3,6 +3,7 @@ package evm
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,7 +22,7 @@ var (
 	useraAddress    = "17RH6oiMbUjat3AAyQeifNiACPFefvz3Au"
 	useraPrivateKey = "56d1272fcf806c3c5105f3536e39c8b33f88cb8971011dfe5886159201884763"
 
-	url       = "http://localhost:8901"
+	url       = "http://172.22.16.179:8901"
 	paraName  = "user.p.mbaas."
 	addressID = NormalAddressID
 	chainID   = 999
@@ -73,9 +74,8 @@ func TestEvm(t *testing.T) {
 	fmt.Println("; 执行结果 = ", detail.Receipt.Ty)
 
 	// 计算合约地址
-	//contractAddress, err := GetContractAddr(deployAddress, strings.TrimPrefix(txhash, "0x"), url)
-	//assert.Nil(t, err)
-	contractAddress := LocalGetContractAddr(deployAddress, tx.Hash(), int32(addressID))
+	contractAddress := GetContractAddr(deployAddress, strings.TrimPrefix(txhash, "0x"), url)
+	//contractAddress := LocalGetContractAddr(deployAddress, tx.Hash(), int32(addressID))
 	fmt.Println("部署好的合约地址 = " + contractAddress)
 
 	length := 2

@@ -68,22 +68,15 @@ func InitAddrType(addrType int32) {
 	evmcommon.InitEvmAddressTypeOnce(driver)
 }
 
-func GetContractAddr(deployer, hash, rpcLaddr string) (string, error) {
+func GetContractAddr(deployer, hash, rpcLaddr string) string {
 	params := &evmtypes.EvmCalcNewContractAddrReq{
 		Caller: deployer,
 		Txhash: hash,
 	}
 	var res string
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "evm.CalcNewContractAddr", params, &res)
-	result, err := ctx.RunResult()
-	if err != nil {
-		return "", err
-	}
-	data, err := json.MarshalIndent(result, "", "    ")
-	if err != nil {
-		return "", err
-	}
-	return string(data), nil
+	ctx.Run()
+	return res
 }
 
 func QueryEvmGas(rpcLaddr, txStr, caller string) (int64, error) {
