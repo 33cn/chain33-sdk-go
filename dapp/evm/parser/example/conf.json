@@ -1,0 +1,23 @@
+{
+  "parseTopics":[
+    {
+      "contractAddr":"1LVekzFLLFxerZQ2zMAVQTrwWjkeHgkcdU",
+      "abi":[{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"testA","type":"address"}],"name":"SetAddress","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"uint256","name":"value1","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"value2","type":"uint256"}],"name":"SetValue","type":"event"},{"inputs":[],"name":"_A","outputs":[{"internalType":"contract TestA","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getTestA","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getValue","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"a","type":"address"}],"name":"setTestA","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_value","type":"uint256"}],"name":"setValue","outputs":[],"stateMutability":"nonpayable","type":"function"}],
+      "eventNames":["SetAddress"]
+    }
+  ],
+  "listenServer": {
+    "listenAddr": ":8080"
+  },
+  "topic": {
+    "name": "chain33-evm-parser",
+    "url": "http://localhost:8080/evmevent/json",
+    "type": 4,
+    "encode": "jrpc",
+    "contracts": ["1LVekzFLLFxerZQ2zMAVQTrwWjkeHgkcdU"],
+    "lastSequence": 0,
+    "lastHeight": 0,
+    "lastBlockHash": ""
+  },
+  "chain33Host": "http://localhost:8901"
+}
