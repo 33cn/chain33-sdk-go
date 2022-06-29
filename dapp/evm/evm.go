@@ -94,13 +94,7 @@ func QueryEvmGas(rpcLaddr, txStr, caller string) (int64, error) {
 }
 
 func UpdateTxFee(tx *ttypes.Transaction, gas int64) {
-	fee := int64(0)
-	if gas < EVM_FEE {
-		fee = EVM_FEE
-	} else {
-		fee = gas + 1e5
-	}
-	tx.Fee = fee
+	tx.Fee = gas + EVM_FEE
 }
 
 func QueryContract(rpcLaddr, addr, abiStr, input, caller string) ([]interface{}, error) {
