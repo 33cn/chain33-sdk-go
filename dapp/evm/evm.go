@@ -75,8 +75,15 @@ func GetContractAddr(deployer, hash, rpcLaddr string) string {
 	}
 	var res string
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "evm.CalcNewContractAddr", params, &res)
-	ctx.Run()
+	ctx.RunResult()
 	return res
+}
+
+func GetProperFee(rpcLaddr string) int64 {
+	var res rpctypes.ReplyProperFee
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.GetProperFee", nil, &res)
+	ctx.RunResult()
+	return res.ProperFee
 }
 
 func QueryEvmGas(rpcLaddr, txStr, caller string) (int64, error) {
@@ -93,8 +100,14 @@ func QueryEvmGas(rpcLaddr, txStr, caller string) (int64, error) {
 	return int64(estGasResp.Gas), nil
 }
 
-func UpdateTxFee(tx *ttypes.Transaction, gas int64) {
-	tx.Fee = gas + EVM_FEE
+func UpdateTxFee(tx *ttypes.Transaction, gas int64, fee int64) {
+	realFee := int64(0)
+	if fee > gas {
+		realFee = fee
+	} else {
+		realFee = gas
+	}
+	tx.Fee = realFee + EVM_FEE
 }
 
 func QueryContract(rpcLaddr, addr, abiStr, input, caller string) ([]interface{}, error) {
@@ -154,14 +167,13 @@ func sendQuery(rpcAddr, funcName string, request ttypes.Message, result proto.Me
 
 func CreateNobalance(etx *ttypes.Transaction, fromAddressPriveteKey, withHoldPrivateKey, paraName string, addressID int32, chainID int32) (*ttypes.Transactions, error) {
 	var noneExecer = "none"
-
 	noneTx := &ttypes.Transaction{Execer: []byte(paraName + noneExecer), Payload: []byte("no-fee-transaction"), Nonce: rand.Int63(), ChainID: chainID}
 	noneTx.To, _ = address.GetExecAddress(paraName+noneExecer, addressID)
-	noneTx.Fee = EVM_FEE
+	noneTx.Fee = etx.Fee
 	txs := []*ttypes.Transaction{noneTx}
 	txs = append(txs, etx)
 
-	group, err := ttypes.CreateTxGroup(txs, EVM_FEE)
+	group, err := ttypes.CreateTxGroup(txs, etx.Fee)
 	if err != nil {
 		return nil, err
 	}
