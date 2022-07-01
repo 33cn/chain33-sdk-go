@@ -19,10 +19,10 @@ type ParseMap struct {
 //解析结果
 type ParseTxResult struct {
 	// contractAddr--->eventID--->paramName--->value
-	ParseContractMap map[string]map[common.Hash]map[string]interface{}
+	ParseContractMap map[string]map[string]map[string]interface{}
 
 	// eventID--->paramName--->value
-	ParseEventMap map[common.Hash]map[string]interface{}
+	ParseEventMap map[string]map[string]interface{}
 }
 
 //多个合约订阅事件解析,全局变量   contractAddr-->eventID--->event
@@ -38,9 +38,42 @@ func ParseTopics(event abi.Event, topics []string) (map[string]interface{}, erro
 		return nil, fmt.Errorf("It's not a listen event!")
 	}
 	outMap := make(map[string]interface{})
-	err := abi.ParseTopicsIntoMap(outMap, event.Inputs, hashs[1:])
+	var args []abi.Argument
+	for _, arg := range event.Inputs {
+		if arg.Indexed {
+			args = append(args, arg)
+		}
+	}
+	err := abi.ParseTopicsIntoMap(outMap, args, hashs[1:])
 	if err != nil {
 		return outMap, fmt.Errorf("ParseTopics have a err: %s /n", err.Error())
+	}
+	return outMap, nil
+}
+
+func ParseEvent(event abi.Event, evmLog *types.EVMLog) (map[string]interface{}, error) {
+	var hashs []common.Hash
+	for _, topic := range evmLog.GetTopic() {
+		hashs = append(hashs, common.BytesToHash(topic))
+	}
+	outMap := make(map[string]interface{})
+	var args []abi.Argument
+	for _, arg := range event.Inputs {
+		if arg.Indexed {
+			args = append(args, arg)
+		}
+	}
+	//解析topics
+	err := abi.ParseTopicsIntoMap(outMap, args, hashs[1:])
+	if err != nil {
+		return outMap, fmt.Errorf("ParseTopics have a err: %s /n", err.Error())
+	}
+	//解析非索引参数值
+	if evmLog.GetData() != nil {
+		err := event.Inputs.UnpackIntoMap(outMap, evmLog.GetData())
+		if err != nil {
+			return outMap, fmt.Errorf("ParseTopics have a err: %s /n", err.Error())
+		}
 	}
 	return outMap, nil
 }
@@ -58,38 +91,30 @@ func ParseEVMTxLogs(blks *types.EVMTxLogsInBlks, parseMap *ParseMap) map[string]
 			}
 			tx := txLog.Tx
 			results[common.Bytes2Hex(tx.Hash())] = &ParseTxResult{
-				ParseContractMap: make(map[string]map[common.Hash]map[string]interface{}),
-				ParseEventMap:    make(map[common.Hash]map[string]interface{}),
+				ParseContractMap: make(map[string]map[string]map[string]interface{}),
+				ParseEventMap:    make(map[string]map[string]interface{}),
 			}
 			for _, evmLog := range txLog.GetLogsPerTx().GetLogs() {
 				//如果TopicsContractMap中存在该合约
 				if topicsEvent, ok := parseMap.TopicsContractMap[evmAction.ContractAddr]; ok {
 					//从topicsEvent中匹配相关事件
 					if event, ok := topicsEvent[common.BytesToHash(evmLog.GetTopic()[0])]; ok {
-						var hashs []common.Hash
-						for _, topic := range evmLog.GetTopic() {
-							hashs = append(hashs, common.BytesToHash(topic))
-						}
-						outMap := make(map[string]interface{})
-						err := abi.ParseTopicsIntoMap(outMap, event.Inputs, hashs[1:])
+						outMap, err := ParseEvent(event, evmLog)
 						if err != nil {
 							continue
 						}
-						results[common.Bytes2Hex(tx.Hash())].ParseContractMap[evmAction.ContractAddr][event.ID] = outMap
+						eventMap := make(map[string]map[string]interface{})
+						eventMap[event.Name] = outMap
+						results[common.Bytes2Hex(tx.Hash())].ParseContractMap[evmAction.ContractAddr] = eventMap
 					}
 				}
 				//如果定义存在订阅事件
 				if event, ok := parseMap.TopicsEventMap[common.BytesToHash(evmLog.GetTopic()[0])]; ok {
-					var hashs []common.Hash
-					for _, topic := range evmLog.GetTopic() {
-						hashs = append(hashs, common.BytesToHash(topic))
-					}
-					outMap := make(map[string]interface{})
-					err := abi.ParseTopicsIntoMap(outMap, event.Inputs, hashs[1:])
+					outMap, err := ParseEvent(event, evmLog)
 					if err != nil {
 						continue
 					}
-					results[common.Bytes2Hex(tx.Hash())].ParseEventMap[event.ID] = outMap
+					results[common.Bytes2Hex(tx.Hash())].ParseEventMap[event.Name] = outMap
 				}
 			}
 		}
@@ -118,8 +143,8 @@ func ParseBlockReceipts(reqs *types.BlockSeqs, parseMap *ParseMap) map[string]*P
 			}
 
 			results[common.Bytes2Hex(tx.Hash())] = &ParseTxResult{
-				ParseContractMap: make(map[string]map[common.Hash]map[string]interface{}),
-				ParseEventMap:    make(map[common.Hash]map[string]interface{}),
+				ParseContractMap: make(map[string]map[string]map[string]interface{}),
+				ParseEventMap:    make(map[string]map[string]interface{}),
 			}
 			for _, log := range req.GetDetail().Receipts[txIndex].Logs {
 				//TyLogEVMEventData = 605 这个log类型定义在evm合约内部
@@ -136,31 +161,22 @@ func ParseBlockReceipts(reqs *types.BlockSeqs, parseMap *ParseMap) map[string]*P
 				if topicsEvent, ok := parseMap.TopicsContractMap[evmAction.ContractAddr]; ok {
 					//从topicsEvent中匹配相关事件
 					if event, ok := topicsEvent[common.BytesToHash(evmLog.GetTopic()[0])]; ok {
-						results[common.Bytes2Hex(tx.Hash())].ParseContractMap[evmAction.ContractAddr] = make(map[common.Hash]map[string]interface{})
-						var hashs []common.Hash
-						for _, topic := range evmLog.GetTopic() {
-							hashs = append(hashs, common.BytesToHash(topic))
-						}
-						outMap := make(map[string]interface{})
-						err := abi.ParseTopicsIntoMap(outMap, event.Inputs, hashs[1:])
+						outMap, err := ParseEvent(event, &evmLog)
 						if err != nil {
 							continue
 						}
-						results[common.Bytes2Hex(tx.Hash())].ParseContractMap[evmAction.ContractAddr][event.ID] = outMap
+						eventMap := make(map[string]map[string]interface{})
+						eventMap[event.Name] = outMap
+						results[common.Bytes2Hex(tx.Hash())].ParseContractMap[evmAction.ContractAddr] = eventMap
 					}
 				}
 				//如果定义存在订阅事件
 				if event, ok := parseMap.TopicsEventMap[common.BytesToHash(evmLog.GetTopic()[0])]; ok {
-					var hashs []common.Hash
-					for _, topic := range evmLog.GetTopic() {
-						hashs = append(hashs, common.BytesToHash(topic))
-					}
-					outMap := make(map[string]interface{})
-					err := abi.ParseTopicsIntoMap(outMap, event.Inputs, hashs[1:])
+					outMap, err := ParseEvent(event, &evmLog)
 					if err != nil {
 						continue
 					}
-					results[common.Bytes2Hex(tx.Hash())].ParseEventMap[event.ID] = outMap
+					results[common.Bytes2Hex(tx.Hash())].ParseEventMap[event.Name] = outMap
 				}
 
 			}
