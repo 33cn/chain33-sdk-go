@@ -3,15 +3,16 @@ package main
 import (
 	"compress/gzip"
 	"fmt"
-	"github.com/33cn/chain33/rpc/jsonclient"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
+	"encoding/json"
 
 	"github.com/33cn/chain33-sdk-go/dapp/evm/parser"
+	"github.com/33cn/chain33/rpc/jsonclient"
 	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 	. "github.com/33cn/plugin/plugin/dapp/evm/executor/vm/common"
@@ -127,8 +128,12 @@ func handlerReq(body []byte, cfg *parser.Config) error {
 			}
 		}
 		results := parser.ParseBlockReceipts(&reqs, parseMap)
-		//TODO 后续处理
-		log.Println(results)
+		jsonByte, err := json.Marshal(results)
+		if err != nil {
+			log.Fatal("json Marshal have error: %v", err)
+			return err
+		}
+		log.Println(string(jsonByte))
 		return nil
 	}
 
@@ -147,10 +152,13 @@ func handlerReq(body []byte, cfg *parser.Config) error {
 				return err
 			}
 		}
-		log.Println(reqs)
 		results := parser.ParseEVMTxLogs(&reqs, parseMap)
-		//TODO 后续处理
-		log.Println(results)
+		jsonByte, err := json.Marshal(results)
+		if err != nil {
+			log.Fatal("json Marshal have error: %v", err)
+			return err
+		}
+		log.Println(string(jsonByte))
 		return nil
 	}
 	return fmt.Errorf("unknown type")

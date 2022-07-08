@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/33cn/chain33/common"
+	"github.com/33cn/chain33/types"
 	"github.com/33cn/plugin/plugin/dapp/evm/executor/abi"
 )
 
@@ -24,8 +26,38 @@ func Test_ParseTopics(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+	fmt.Println("test ParseTopics")
 	//返回值类型判断可以根据abi中参数类型进行解析
 	for _, arg := range abiTest.Events["Transfer"].Inputs {
+		fmt.Println("param name is", arg.Name, ", value is", outMap[arg.Name])
+	}
+}
+
+func Test_ParseEvent(t *testing.T) {
+	ABI := "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"testA\",\"type\":\"address\"}],\"name\":\"SetAddress\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"value1\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value2\",\"type\":\"uint256\"}],\"name\":\"SetValue\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"_A\",\"outputs\":[{\"internalType\":\"contract TestA\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTestA\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getValue\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"a\",\"type\":\"address\"}],\"name\":\"setTestA\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"setValue\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+	//读取abi
+	abi, err := abi.JSON(strings.NewReader(ABI))
+	if err != nil {
+		t.Log(err)
+	}
+	rawLog := "0x0a20a9d8a4f3fc191fb61df2687323053abf87eb27f0fab7b5d3f4d97fd50cc7a7c70a20000000000000000000000000f39e69a8f2c1041edd7616cf079c7084bb7a52420a2000000000000000000000000000000000000000000000000000000000075bcd15122000000000000000000000000000000000000000000000000000000000075bcd15"
+	data, err := common.FromHex(rawLog)
+	if err != nil {
+		t.Error(err)
+	}
+	var evmLog types.EVMLog
+	err = types.Decode(data, &evmLog)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(len(evmLog.GetTopic()))
+	outMap, err := ParseEvent(abi.Events["SetValue"], &evmLog)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Println("test ParseEvent")
+	//返回值类型判断可以根据abi中参数类型进行解析
+	for _, arg := range abi.Events["SetValue"].Inputs {
 		fmt.Println("param name is", arg.Name, ", value is", outMap[arg.Name])
 	}
 }
