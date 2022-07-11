@@ -77,5 +77,8 @@ param = fmt.Sprintf("balanceOf(%s,%d)", useraAddress, ids[0])
 balance, err := QueryContract(url, contractAddress, abi, param, contractAddress)
 ```
 
+#### JsonRPC说明文档
+[JsonRPC](./doc/jsonrpc数据上链.md)
+
 ## 接口文档
 [chain33-sdk-go API](./接口文档.md)
