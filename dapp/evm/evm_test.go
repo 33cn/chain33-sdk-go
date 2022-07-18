@@ -22,7 +22,7 @@ var (
 	useraAddress    = "17RH6oiMbUjat3AAyQeifNiACPFefvz3Au"
 	useraPrivateKey = "56d1272fcf806c3c5105f3536e39c8b33f88cb8971011dfe5886159201884763"
 
-	url       = "http://172.22.16.179:8901"
+	url       = "http://localhost:8901"
 	paraName  = "user.p.mbaas."
 	addressID = NormalAddressID
 	chainID   = 999
@@ -123,6 +123,10 @@ func TestEvm(t *testing.T) {
 	detail, err = jsonclient.QueryTransaction(txhash)
 	assert.Nil(t, err)
 	fmt.Println("; 执行结果 = ", detail.Receipt.Ty)
+	callTxHash := types.ToHexPrefix(group.Tx().Next)
+	res, err := jsonclient.QueryTransaction(callTxHash)
+	assert.Nil(t, err)
+	fmt.Println("调用合约交易hash = ", callTxHash, "; 执行结果 = ", res.Receipt.Ty)
 
 	// 合约查询
 	param = fmt.Sprintf("balanceOf(%s,%d)", useraAddress, ids[0])
