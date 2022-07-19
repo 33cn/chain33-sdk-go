@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/33cn/chain33-sdk-go/client"
+	"github.com/33cn/chain33-sdk-go/crypto"
 	"github.com/33cn/chain33-sdk-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -62,7 +63,7 @@ func TestEvm(t *testing.T) {
 	fee := GetProperFee(url)
 	fmt.Println("proper fee = ", fee)
 	UpdateTxFee(tx, gas, fee)
-	err = SignTx(tx, deployPrivateKey, int32(addressID))
+	err = crypto.SignTx(tx, deployPrivateKey, int32(addressID))
 	assert.Nil(t, err)
 	txhash := types.ToHexPrefix(tx.Hash())
 	signTx := types.ToHexPrefix(types.Encode(tx))

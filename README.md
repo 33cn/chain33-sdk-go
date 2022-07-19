@@ -16,6 +16,15 @@ export GOPROXY=https://mirrors.aliyun.com/goproxy
 
 ## 使用
 
+### 生成账户和签名
+```go
+// 参数为地址类型，BTC_ADDRESS表示比特币格式，ETH_ADDRESS表示以太坊格式
+acc, err := NewAccount(ETH_ADDRESS)
+tx := &ttypes.Transaction{Execer: []byte("none"), Payload: []byte("account test")}
+// acc.Type表示地址类型
+err = SignTx(tx, acc.PrivateKey, acc.Type)
+```
+
 ### RPC客户端
 通过jclient调用rpc接口发送交易和查询交易
 ```go

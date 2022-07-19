@@ -2,9 +2,6 @@ package eth
 
 import (
 	"crypto/ecdsa"
-	"github.com/33cn/chain33-sdk-go/crypto"
-	ccrypto "github.com/33cn/chain33/common/crypto"
-	ttypes "github.com/33cn/chain33/types"
 
 	"github.com/33cn/chain33-sdk-go/types"
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
@@ -42,26 +39,11 @@ func PublicFromByte(pubKey []byte) *ecdsa.PublicKey {
 	return pub
 }
 
-func PubKeyToAddress(pubKey []byte) string {
-	pub, _ := ethCrypto.UnmarshalPubkey(pubKey)
+func PubKeyToAddress(pubKey []byte) (string, error) {
+	pub, err := ethCrypto.UnmarshalPubkey(pubKey)
+	if err != nil {
+		return "", err
+	}
 	addr := ethCrypto.PubkeyToAddress(*pub)
-	return types.ToHexPrefix(addr.Bytes())
-}
-
-func SignTx(tx *ttypes.Transaction, privKey string) error {
-	privkey, err := types.FromHex(privKey)
-	if err != nil {
-		return err
-	}
-	cr, err := ccrypto.Load(crypto.SECP256K1, -1)
-	if err != nil {
-		return err
-	}
-	priv, err := cr.PrivKeyFromBytes(privkey)
-	if err != nil {
-		return err
-	}
-	ty := ttypes.EncodeSignID(ttypes.SECP256K1, 2)
-	tx.Sign(ty, priv)
-	return nil
+	return types.ToHexPrefix(addr.Bytes()), nil
 }
