@@ -10,7 +10,6 @@ import (
 	"github.com/33cn/chain33-sdk-go/types"
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/address"
-	ccrypto "github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	ttypes "github.com/33cn/chain33/types"
@@ -177,27 +176,15 @@ func CreateNobalance(etx *ttypes.Transaction, fromAddressPriveteKey, withHoldPri
 	if err != nil {
 		return nil, err
 	}
-	SignTx(group.Txs[0], withHoldPrivateKey, addressID)
-	SignTx(group.Txs[1], fromAddressPriveteKey, addressID)
+	err = crypto.SignTx(group.Txs[0], withHoldPrivateKey, addressID)
+	if err != nil {
+		return nil, err
+	}
+	err = crypto.SignTx(group.Txs[1], fromAddressPriveteKey, addressID)
+	if err != nil {
+		return nil, err
+	}
 
 	return group, nil
 }
 
-func SignTx(tx *ttypes.Transaction, privKey string, addressID int32) error {
-	privkey, err := types.FromHex(privKey)
-	if err != nil {
-		return err
-	}
-	cr, err := ccrypto.Load(crypto.SECP256K1, -1)
-	if err != nil {
-		fmt.Println(err.Error())
-		return err
-	}
-	priv, err := cr.PrivKeyFromBytes(privkey)
-	if err != nil {
-		return err
-	}
-	ty := ttypes.EncodeSignID(ttypes.SECP256K1, addressID)
-	tx.Sign(ty, priv)
-	return nil
-}
